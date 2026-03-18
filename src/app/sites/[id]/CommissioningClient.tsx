@@ -356,9 +356,9 @@ export default function CommissioningClient({ data }: { data: SetupData }) {
                               <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-2 text-muted-foreground border border-border/50">
                                 {hwModelLabel(device.device_type)}
                               </span>
-                              {(device.config?.venus_os as boolean) && (
+                              {(device.config?.venus_os_host as string) && (
                                 <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                  Venus OS
+                                  → Venus OS
                                 </span>
                               )}
                               <span className={`text-[10px] font-bold uppercase tracking-wider ${ds.textClass}`}>
