@@ -5,7 +5,7 @@ import { Suspense, useState, useEffect, useActionState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Server, Pencil, Trash2, Plus,
-  Cpu, Zap, Battery, Car, Gauge, HelpCircle,
+  Cpu, Zap, Battery, Car, Gauge, HelpCircle, RefreshCw,
 } from "lucide-react";
 import Header from "@/components/dashboard/Header";
 import SiteTabNav from "./SiteTabNav";
@@ -15,7 +15,8 @@ import {
   deleteAssetAction,
   type AssetActionState,
 } from "@/app/actions/assets";
-import type { SetupData, AssetFullRow, TemplateRow } from "./page";
+import type { SetupData, AssetFullRow, TemplateRow, DeviceRow } from "./page";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -264,16 +265,57 @@ function EditAssetForm({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function CommissioningClient({ data }: { data: SetupData }) {
-  const { site, devices, assets, templates, alertCount } = data;
+  const { site, devices: initialDevices, assets, templates, alertCount } = data;
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm]       = useState(false);
+  const [editingId, setEditingId]           = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [devices, setDevices]               = useState<DeviceRow[]>(initialDevices);
+  const [realtimeConnected, setRealtimeConnected] = useState(false);
 
   const siteId = site?.id ?? "";
   const siteName = site?.name ?? "Unbekannter Standort";
   const siteStatus = site?.status ?? "pending";
   const statusConfig = getStatusConfig(siteStatus);
+
+  // ── Supabase Realtime: Device-Status live ─────────────────────────────────
+  useEffect(() => {
+    if (!siteId) return;
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`devices:site:${siteId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "devices",
+          filter: `site_id=eq.${siteId}`,
+        },
+        (payload) => {
+          setDevices((prev) => {
+            if (payload.eventType === "INSERT") {
+              return [...prev, payload.new as DeviceRow];
+            }
+            if (payload.eventType === "DELETE") {
+              return prev.filter((d) => d.id !== (payload.old as DeviceRow).id);
+            }
+            // UPDATE
+            return prev.map((d) =>
+              d.id === (payload.new as DeviceRow).id
+                ? { ...d, ...(payload.new as DeviceRow) }
+                : d
+            );
+          });
+        }
+      )
+      .subscribe((status) => {
+        setRealtimeConnected(status === "SUBSCRIBED");
+      });
+
+    return () => { supabase.removeChannel(channel); };
+  }, [siteId]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -325,11 +367,17 @@ export default function CommissioningClient({ data }: { data: SetupData }) {
               transition={{ delay: 0.1 }}
               className="glass-panel rounded-2xl overflow-hidden"
             >
-              <div className="flex items-center gap-3 border-b border-border/50 px-5 py-4">
-                <Server className="h-4 w-4 text-primary" />
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Steuerbox (Raspberry Pi)
-                </h3>
+              <div className="flex items-center justify-between border-b border-border/50 px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <Server className="h-4 w-4 text-primary" />
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Steuerbox (Raspberry Pi)
+                  </h3>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <RefreshCw className={`h-3 w-3 ${realtimeConnected ? "text-status-online" : "text-muted-foreground/40"}`} />
+                  {realtimeConnected ? "Live" : "Verbinde…"}
+                </div>
               </div>
 
               {devices.length === 0 ? (

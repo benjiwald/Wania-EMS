@@ -11,6 +11,8 @@ export interface DeviceRow {
   device_type: string;
   status: string;
   last_seen_at: string | null;
+  software_version: string | null;
+  config: Record<string, unknown> | null;
 }
 
 export interface AlertRow {
@@ -108,7 +110,7 @@ async function getSiteDetailData(id: string): Promise<SiteDetailData | null> {
 
   const { data: siteRow, error: siteErr } = await supabase
     .from("sites")
-    .select("id, name, address, status, devices(id, hardware_id, device_type, status, last_seen_at)")
+    .select("id, name, address, status, devices(id, hardware_id, device_type, status, last_seen_at, software_version, config)")
     .eq("id", id)
     .single();
 
