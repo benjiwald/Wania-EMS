@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { Suspense } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Zap, Sun, Battery, Car,
@@ -10,6 +11,7 @@ import {
   AreaChart, Area, XAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import Header from "@/components/dashboard/Header";
+import SiteTabNav from "./SiteTabNav";
 import type { SiteDetailData } from "./page";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -66,7 +68,7 @@ export default function SiteDetailClient({ data }: { data: SiteDetailData }) {
               Zurück zum Dashboard
             </Link>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 mt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 mt-2">
               <div className="flex items-center gap-4">
                 <span className={`h-3 w-3 rounded-full shrink-0 ${statusConfig.dotClass}`} />
                 <div>
@@ -84,6 +86,11 @@ export default function SiteDetailClient({ data }: { data: SiteDetailData }) {
               </div>
             </div>
           </motion.div>
+
+          {/* Tab Navigation */}
+          <Suspense fallback={null}>
+            <SiteTabNav siteId={site.id} />
+          </Suspense>
 
           {/* KPI Row */}
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-8">
