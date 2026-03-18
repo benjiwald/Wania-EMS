@@ -5,6 +5,7 @@ import KPICard from "@/components/dashboard/KPICard";
 import SiteCard, { SiteData } from "@/components/dashboard/SiteCard";
 import AlertsPanel, { AlertData } from "@/components/dashboard/AlertsPanel";
 import SystemStatus from "@/components/dashboard/SystemStatus";
+import AddDeviceButton from "@/components/dashboard/AddDeviceButton";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type DeviceStatus = "pending" | "online" | "offline" | "error";
@@ -141,7 +142,10 @@ export default async function DashboardPage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Standorte</h2>
-                <span className="text-[11px] font-medium text-muted-foreground mono">{siteCards.length} gesamt</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] font-medium text-muted-foreground mono">{siteCards.length} gesamt</span>
+                  <AddDeviceButton />
+                </div>
               </div>
               {siteCards.length === 0 ? (
                 <div className="glass-panel rounded-2xl p-16 text-center">
