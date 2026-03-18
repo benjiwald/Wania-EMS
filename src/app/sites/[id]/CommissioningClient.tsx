@@ -30,6 +30,17 @@ function formatTime(ts: string | null) {
   return new Date(ts).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
+function hwModelLabel(deviceType: string): string {
+  const map: Record<string, string> = {
+    raspberry_pi_3b_plus: "Raspberry Pi 3 Model B+",
+    raspberry_pi_4:       "Raspberry Pi 4",
+    raspberry_pi_5:       "Raspberry Pi 5",
+    n100_minipc:          "N100 Mini-PC",
+    x86_minipc:           "x86 Mini-PC",
+  };
+  return map[deviceType] ?? deviceType.replace(/_/g, " ");
+}
+
 function assetTypeConfig(type: string) {
   switch (type) {
     case "wallbox":    return { label: "Wallbox",   color: "text-purple-400",          bg: "bg-purple-400/10",  icon: <Car   className="h-4 w-4" /> };
@@ -343,8 +354,13 @@ export default function CommissioningClient({ data }: { data: SetupData }) {
                             <div className="flex items-center gap-3 flex-wrap">
                               <p className="text-base font-bold mono text-foreground">{device.hardware_id}</p>
                               <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-2 text-muted-foreground border border-border/50">
-                                {device.device_type}
+                                {hwModelLabel(device.device_type)}
                               </span>
+                              {(device.config?.venus_os as boolean) && (
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                  Venus OS
+                                </span>
+                              )}
                               <span className={`text-[10px] font-bold uppercase tracking-wider ${ds.textClass}`}>
                                 {ds.label}
                               </span>
@@ -352,8 +368,8 @@ export default function CommissioningClient({ data }: { data: SetupData }) {
 
                             <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4 text-xs">
                               <div>
-                                <p className="text-muted-foreground mb-0.5">Status</p>
-                                <p className={`font-semibold ${ds.textClass}`}>{ds.label}</p>
+                                <p className="text-muted-foreground mb-0.5">Hardware</p>
+                                <p className="font-semibold text-foreground">{hwModelLabel(device.device_type)}</p>
                               </div>
                               <div>
                                 <p className="text-muted-foreground mb-0.5">Letzter Kontakt</p>
