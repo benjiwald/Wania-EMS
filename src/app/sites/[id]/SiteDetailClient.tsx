@@ -146,7 +146,7 @@ export default function SiteDetailClient({ data }: { data: SiteDetailData }) {
                         <div key={d.id} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-surface-1/50">
                           <span className={`h-2 w-2 rounded-full shrink-0 ${ds.dotClass}`} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-foreground truncate">{d.name}</p>
+                            <p className="text-sm font-semibold text-foreground truncate">{d.hardware_id}</p>
                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{d.device_type}</p>
                           </div>
                           <span className={`text-[10px] font-bold uppercase tracking-wider ${ds.textClass}`}>{ds.label}</span>
@@ -199,16 +199,17 @@ export default function SiteDetailClient({ data }: { data: SiteDetailData }) {
               </motion.div>
 
               {/* Config */}
-              {config && (config.pv_capacity_kw != null || config.battery_capacity_kwh != null || config.max_grid_power_kw != null) && (
+              {config && (config.grid_limit_kw != null || config.feed_in_limit_kw != null) && (
                 <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
                   className="glass-panel rounded-2xl overflow-hidden">
                   <div className="border-b border-border/50 px-5 py-4">
                     <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Konfiguration</h3>
                   </div>
                   <div className="p-5 space-y-3">
-                    {config.pv_capacity_kw     != null && <ConfigRow label="PV Kapazität"  value={`${config.pv_capacity_kw} kW`} />}
-                    {config.battery_capacity_kwh != null && <ConfigRow label="Speicher"     value={`${config.battery_capacity_kwh} kWh`} />}
-                    {config.max_grid_power_kw   != null && <ConfigRow label="Max. Netzbezug" value={`${config.max_grid_power_kw} kW`} />}
+                    {config.grid_limit_kw    != null && <ConfigRow label="Netzlimit"    value={`${config.grid_limit_kw} kW`} />}
+                    {config.feed_in_limit_kw != null && <ConfigRow label="Einspeiselimit" value={`${config.feed_in_limit_kw} kW`} />}
+                    <ConfigRow label="PV-Optimierung"      value={config.pv_optimization      ? "Aktiv" : "Inaktiv"} />
+                    <ConfigRow label="Batterie-Optimierung" value={config.battery_optimization ? "Aktiv" : "Inaktiv"} />
                   </div>
                 </motion.div>
               )}

@@ -5,7 +5,7 @@ import SiteDetailClient from "./SiteDetailClient";
 // ─── Types ──────────────────────────────────────────────────────────────────
 export interface DeviceRow {
   id: string;
-  name: string;
+  hardware_id: string;   // devices table has hardware_id, not name
   device_type: string;
   status: string;
   last_seen_at: string | null;
@@ -26,9 +26,10 @@ export interface AssetRow {
 }
 
 export interface SiteConfig {
-  pv_capacity_kw: number | null;
-  battery_capacity_kwh: number | null;
-  max_grid_power_kw: number | null;
+  grid_limit_kw: number | null;
+  feed_in_limit_kw: number | null;
+  pv_optimization: boolean;
+  battery_optimization: boolean;
 }
 
 export interface SiteDetailData {
@@ -45,14 +46,14 @@ export interface SiteDetailData {
 async function getSiteDetailData(id: string): Promise<SiteDetailData | null> {
   const supabase = await createClient();
 
-  // Fetch site with all its devices
-  const { data: siteRow } = await supabase
+  // Fetch site with all its devices (devices has hardware_id, not name)
+  const { data: siteRow, error: siteErr } = await supabase
     .from("sites")
-    .select("id, name, address, status, devices(id, name, device_type, status, last_seen_at)")
+    .select("id, name, address, status, devices(id, hardware_id, device_type, status, last_seen_at)")
     .eq("id", id)
     .single();
 
-  if (!siteRow) return null;
+  if (siteErr || !siteRow) return null;
 
   const devices = (siteRow.devices ?? []) as DeviceRow[];
   const deviceIds = devices.map((d) => d.id);
@@ -79,10 +80,9 @@ async function getSiteDetailData(id: string): Promise<SiteDetailData | null> {
       .select("id, name, status, asset_type")
       .eq("site_id", id)
       .eq("asset_type", "wallbox"),
-    // site_configs may not exist in every setup — ignore errors
     supabase
       .from("site_configs")
-      .select("pv_capacity_kw, battery_capacity_kwh, max_grid_power_kw")
+      .select("grid_limit_kw, feed_in_limit_kw, pv_optimization, battery_optimization")
       .eq("site_id", id)
       .maybeSingle(),
   ]);
