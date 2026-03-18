@@ -27,6 +27,29 @@
   --status-info:            hsl(217, 91%, 65%);
 }
 
+[data-theme="light"] {
+  --background:             hsl(220, 20%, 97%);
+  --foreground:             hsl(220, 16%, 10%);
+  --card:                   hsl(220, 20%, 100%);
+  --card-foreground:        hsl(220, 16%, 10%);
+  --primary:                hsl(160, 70%, 36%);
+  --primary-foreground:     hsl(0, 0%, 100%);
+  --muted:                  hsl(220, 14%, 91%);
+  --muted-foreground:       hsl(215, 12%, 44%);
+  --destructive:            hsl(0, 72%, 50%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border:                 hsl(220, 14%, 84%);
+  --input:                  hsl(220, 14%, 84%);
+  --ring:                   hsl(160, 70%, 36%);
+  --surface-1:              hsl(220, 20%, 93%);
+  --surface-2:              hsl(220, 20%, 89%);
+  --surface-3:              hsl(220, 14%, 83%);
+  --status-online:          hsl(160, 70%, 36%);
+  --status-offline:         hsl(0, 72%, 50%);
+  --status-warning:         hsl(38, 85%, 44%);
+  --status-info:            hsl(217, 80%, 48%);
+}
+
 @theme inline {
   --font-sans: 'Outfit', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

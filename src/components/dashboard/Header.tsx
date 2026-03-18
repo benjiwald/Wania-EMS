@@ -1,8 +1,27 @@
 "use client";
-import { Activity, Bell, LogOut } from "lucide-react";
+import { Activity, Bell, LogOut, Sun, Moon } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
+import { useState, useEffect } from "react";
 
 export default function Header({ alertCount, userEmail }: { alertCount: number; userEmail?: string }) {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("ems-theme") as "dark" | "light" | null;
+    if (saved) setTheme(saved);
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("ems-theme", next);
+    if (next === "light") {
+      document.documentElement.setAttribute("data-theme", "light");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 glass-header">
       <div className="mx-auto flex h-14 max-w-[1440px] items-center justify-between px-6">
@@ -28,6 +47,13 @@ export default function Header({ alertCount, userEmail }: { alertCount: number; 
                 {alertCount}
               </span>
             )}
+          </button>
+          <button
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Hellmodus aktivieren" : "Dunkelmodus aktivieren"}
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
           <div className="mx-2 h-5 w-px bg-border" />
           <form action={signOut}>
