@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import {
   ArrowLeft, MapPin, Server, Pencil, Trash2, Plus,
   Cpu, Zap, Battery, Car, Gauge, HelpCircle, RefreshCw,
+  Terminal, RotateCcw, Radio,
 } from "lucide-react";
 import Header from "@/components/dashboard/Header";
 import SiteTabNav from "./SiteTabNav";
@@ -15,6 +16,7 @@ import {
   deleteAssetAction,
   type AssetActionState,
 } from "@/app/actions/assets";
+import { sendDeviceCommandAction, type CommandState } from "@/app/actions/device";
 import type { SetupData, AssetFullRow, TemplateRow, DeviceRow } from "./page";
 import { createClient } from "@/lib/supabase/client";
 
@@ -51,6 +53,59 @@ function assetTypeConfig(type: string) {
     case "heat_pump":  return { label: "Wärmepumpe", color: "text-orange-400",         bg: "bg-orange-400/10",  icon: <Cpu   className="h-4 w-4" /> };
     default:           return { label: "Sonstige",  color: "text-muted-foreground",    bg: "bg-surface-2",         icon: <HelpCircle className="h-4 w-4" /> };
   }
+}
+
+// ─── Command Panel ────────────────────────────────────────────────────────────
+function CommandPanel({ hardwareId, siteId }: { hardwareId: string; siteId: string }) {
+  const [state, formAction, isPending] = useActionState<CommandState, FormData>(
+    sendDeviceCommandAction,
+    null
+  );
+  const [lastMsg, setLastMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state?.success) setLastMsg(state.message ?? "Befehl gesendet");
+    if (state?.error)   setLastMsg(`Fehler: ${state.error}`);
+    if (state)          setTimeout(() => setLastMsg(null), 4000);
+  }, [state]);
+
+  const cmdBtn = (action: string, label: string, icon: React.ReactNode, variant = "default") => (
+    <form action={formAction}>
+      <input type="hidden" name="hardware_id" value={hardwareId} />
+      <input type="hidden" name="action"      value={action} />
+      <input type="hidden" name="site_id"     value={siteId} />
+      <button
+        type="submit"
+        disabled={isPending}
+        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold transition-colors disabled:opacity-50 ${
+          variant === "danger"
+            ? "border border-status-offline/30 bg-status-offline/10 text-status-offline hover:bg-status-offline/20"
+            : "border border-border/50 bg-surface-2 text-foreground hover:bg-surface-3"
+        }`}
+      >
+        {icon}
+        {label}
+      </button>
+    </form>
+  );
+
+  return (
+    <div className="border-t border-border/30 px-5 py-4">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+        Befehle
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {cmdBtn("ping",          "Ping",            <Radio       className="h-3.5 w-3.5" />)}
+        {cmdBtn("reload_assets", "Assets neu laden", <RefreshCw  className="h-3.5 w-3.5" />)}
+        {cmdBtn("restart",       "Neustart",         <RotateCcw  className="h-3.5 w-3.5" />, "danger")}
+      </div>
+      {lastMsg && (
+        <p className={`mt-2 text-xs font-medium ${state?.error ? "text-status-offline" : "text-status-online"}`}>
+          {lastMsg}
+        </p>
+      )}
+    </div>
+  );
 }
 
 // ─── Input Style ──────────────────────────────────────────────────────────────
@@ -395,47 +450,50 @@ export default function CommissioningClient({ data }: { data: SetupData }) {
                     const mqttBroker = (device.config?.mqtt_broker as string) ?? "—";
                     const mqttPort = (device.config?.mqtt_port as number | string) ?? "—";
                     return (
-                      <div key={device.id} className="p-5">
-                        <div className="flex items-start gap-4">
-                          <div className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${ds.dotClass}`} />
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <p className="text-base font-bold mono text-foreground">{device.hardware_id}</p>
-                              <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-2 text-muted-foreground border border-border/50">
-                                {hwModelLabel(device.device_type)}
-                              </span>
-                              {(device.config?.venus_os_host as string) && (
-                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-                                  → Venus OS
+                      <div key={device.id}>
+                        <div className="p-5">
+                          <div className="flex items-start gap-4">
+                            <div className={`mt-1 h-2.5 w-2.5 rounded-full shrink-0 ${ds.dotClass}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <p className="text-base font-bold mono text-foreground">{device.hardware_id}</p>
+                                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface-2 text-muted-foreground border border-border/50">
+                                  {hwModelLabel(device.device_type)}
                                 </span>
-                              )}
-                              <span className={`text-[10px] font-bold uppercase tracking-wider ${ds.textClass}`}>
-                                {ds.label}
-                              </span>
-                            </div>
+                                {(device.config?.venus_os_host as string) && (
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                    → Venus OS
+                                  </span>
+                                )}
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${ds.textClass}`}>
+                                  {ds.label}
+                                </span>
+                              </div>
 
-                            <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4 text-xs">
-                              <div>
-                                <p className="text-muted-foreground mb-0.5">Hardware</p>
-                                <p className="font-semibold text-foreground">{hwModelLabel(device.device_type)}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground mb-0.5">Letzter Kontakt</p>
-                                <p className="font-semibold mono text-foreground">{formatTime(device.last_seen_at)}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground mb-0.5">Firmware</p>
-                                <p className="font-semibold mono text-foreground">{device.software_version ?? "—"}</p>
-                              </div>
-                              <div>
-                                <p className="text-muted-foreground mb-0.5">MQTT-Broker</p>
-                                <p className="font-semibold mono text-foreground">
-                                  {mqttBroker !== "—" ? `${mqttBroker}:${mqttPort}` : "—"}
-                                </p>
+                              <div className="mt-3 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4 text-xs">
+                                <div>
+                                  <p className="text-muted-foreground mb-0.5">Hardware</p>
+                                  <p className="font-semibold text-foreground">{hwModelLabel(device.device_type)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground mb-0.5">Letzter Kontakt</p>
+                                  <p className="font-semibold mono text-foreground">{formatTime(device.last_seen_at)}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground mb-0.5">Firmware</p>
+                                  <p className="font-semibold mono text-foreground">{device.software_version ?? "—"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-muted-foreground mb-0.5">MQTT-Broker</p>
+                                  <p className="font-semibold mono text-foreground">
+                                    {mqttBroker !== "—" ? `${mqttBroker}:${mqttPort}` : "—"}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </div>
                         </div>
+                        <CommandPanel hardwareId={device.hardware_id} siteId={siteId} />
                       </div>
                     );
                   })}
